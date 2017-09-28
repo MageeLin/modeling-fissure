@@ -1,0 +1,246 @@
+e=stochastic_media_model([5,5]);
+function e =stochastic_media_model(len_mod)
+% % % % % % % % % % % %建立随机介质% % % % % % % % % % % % %
+%len_mod为1×3矩阵，为模型真实大小（米）  numlay为分层控制系统的层数，N为每个分形点之间的分段数，N_hole为孔隙数目
+dalta=0.1;%可控制随机程度数值的上下限
+A=5;%参数ABCr
+B=5;
+r=0.5;
+X=len_mod(1)*40;%模型大小X方向
+Y=len_mod(2)*40;%模型大小Y方向
+hw=4;%hw用于平滑
+X=X+2*hw;
+Y=Y+2*hw;
+dx=1;%网格间距
+dy=1;
+
+AUTO=meshgrid(X,Y);
+for i = 1:X
+    for j = 1:Y
+        AUTO(i,j)=exp(-1*((i*dx)^2/A^2+(j*dy)^2/B^2).^(1./(1+r)));
+    end
+end
+AUTO = fftn(AUTO);
+AUTO = real(AUTO).^2+imag(AUTO).^2;
+
+rand('twister', sum(100*clock));
+RAND=rand(X,Y).*(2*pi);
+
+REAL=AUTO.*cos(RAND);
+IMAGE=AUTO.*sin(RAND);
+Rand = complex(REAL,IMAGE);
+Rand = fftn(Rand);
+Rand = real(Rand).^2+imag(Rand).^2;
+
+a=double(Rand);  % a表示原始图像灰度矩阵
+
+% [m,n,p]=size(a);
+b=zeros(X-2*hw,Y-2*hw);
+e=zeros(X-2*hw,Y-2*hw);
+for i=1+hw:X-hw  %求平滑矩阵
+    for j=1+hw:Y-hw
+        wi=a(i-hw:i+hw,j-hw:j+hw);
+        b(i-hw,j-hw)=mean2(wi);
+        e(i-hw,j-hw)=5;%给介电常数赋初值
+    end
+end
+   
+b=dalta*zscore(b);
+e=e.*(1+b);
+
+% x=0:10:len_mod(1)-10;
+% y=0:10:len_mod(2)-10;
+% z=0:10:len_mod(3)-10;
+% 
+% figure(2)
+% slice(x,y,z,e,[0 len_mod(1)-10],[0 len_mod(2)-10],[0 len_mod(3)-10])
+% set(gca,'ZDir','reverse')
+% set(gca,'XTick',[0:100:len_mod(1)-10]) 
+% set(gca,'YTick',[0:100:len_mod(2)-10]) 
+% set(gca,'ZTick',[0:100:len_mod(3)-10]) 
+% xlabel('Length / m', 'FontName'  , 'Helvetica' , 'Fontsize' , 14)
+% ylabel('Width / m', 'FontName'  , 'Helvetica' , 'Fontsize' , 14)
+% zlabel('Depth / m', 'FontName'  , 'Helvetica' , 'Fontsize' , 14)
+% set(gca,'FontSize',14);
+% shading flat
+% axis equal
+% alpha(0.6)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+% clc
+% clear
+% dalta=0.3;
+% A=0.5;
+% C=0.5;
+% r=0.5;
+% X=289;
+% Y=169;
+% AUTO=meshgrid(Y,X);
+% dy=1;dx=1;%网格间距
+% 
+% for i = 1:X
+%     for j = 1:Y
+% 
+%    AUTO(i,j)=exp(-1*((((i*dx)^2/A^2+(j*dy)^2/C^2))).^(1./(1+r)));
+%      
+%     end
+% end
+% AUTO = fftn(AUTO);
+% AUTO = real(AUTO).^2+imag(AUTO).^2;
+% 
+% 
+% rand('twister', sum(100*clock));%将状态值设置为时变的
+% RAND=rand(Y,X).*(2*pi);
+% 
+% 
+% REAL=AUTO.*cos(RAND);
+% IMAGE=AUTO.*sin(RAND);
+% Rand = complex(REAL,IMAGE);%创建了一个复数
+% Rand = ifftn(Rand);
+% Rand = real(Rand).^2+imag(Rand).^2;
+% %Rand = abs(Rand);
+% 
+% a=double(Rand);  % a表示原始图像灰度矩阵
+% x0=145;
+% y0=95;
+% m1=10;
+% p1=10;
+%     hw=4; 
+% 
+%     [m,p]=size(a);
+% 
+%     b=zeros(Y-2*hw,X-2*hw);%求平滑 选取一个窗口 原矩阵首尾应截掉一部分  
+%     e=zeros(Y-2*hw,X-2*hw);
+%     s=zeros(Y-2*hw,X-2*hw);
+%     ce=zeros(Y-2*hw,X-2*hw);
+%     cs=zeros(Y-2*hw,X-2*hw);
+%     
+% 
+%     for i=1+hw:X-hw  %求平滑矩阵
+%           for j=1+hw:Y-hw
+% 
+%             wi=a(j-hw:j+hw,i-hw:i+hw);
+%             %wi=a(1+hw:X-hw,1+hw:Z-hw);
+% 
+%             b(j-hw,i-hw)=mean2(wi);
+%             e()
+% 
+%           end      
+%     end
+% bb=zscore(b);%数据标准化处理
+% % bb1=abs(bb);
+% ee=e+dalta*bb;
+% ss=s+0.0025*bb;
+%  for ii=1:281
+%         for jj=1:161
+% %             if  ((ii*dx-(x0-4)).^2)/(m1.^2)+((jj*dy-(y0-4)).^2)/(p1.^2)<=1 %((ii*dx-(x0-4)).^2)/(m1.^2)+((jj*dy-(y0-4)).^2)/((n1+2).^2)+((jj*dz-(z0-4)).^2)/((p1+4).^2)<=1;
+% %                 ce(jj,ii)=1.0;
+% %                 cs(jj,ii)=0;
+% %             elseif jj>=141
+% %                 ce(jj,ii)=1.0;
+% %                 cs(jj,ii)=0;
+% %             else
+% %                 ce(jj,ii)=ee(jj,ii);       
+% %                 cs(jj,ii)=ss(jj,ii);
+%             end
+%         end
+%  end
+%  e=ce;
+%  s=cs;
+%  ep0=flipud(e);%上下翻转
+%  sig0=flipud(s);
+% %  ep=fliplr(ep);%左右翻转
+% %  sig=fliplr(sig);
+% %  ep0=rot90(e,2);
+% %  sig0=rot90(s,2);
+%  ep=rot90(ep0);
+%  sig=rot90(sig0);
+% 
+% figure(11)
+% %figure11=figure(11);
+% %z1=26;
+% %z2=66;
+% %zs=linspace(z1+1,z2,4);
+% %slice(x,y,z,e,24,24,zs);
+% % slice(x,y,z,e4,xs,ys,zs);
+% imagesc(ep0);
+% shading interp;
+% colormap hsv
+% colorbar
+% box on
+% set(gca,'XTick',[21,61,101,141,181,221,261],'XTickLabel',{'1','3','5','7','9','11','13'});           % 坐标轴对应的实际距离，由于反演过程中显示的为网格数，因此对应不同的模型需要修改成对应的实际距离。
+% % set(gca,'YTicj',[21,61,101,141,181,221,261],'YTicjLabel',{'1','3','5','7','9','11','13'});
+% set(gca,'YTick',[21,61,101,141],'YTickLabel',{'0','2','4','6'});           % 坐标轴对应的实际距离，由于反演过程中显示的为网格数，因此对应不同的模型需要修改成对应的实际距离。
+% ylabel('Depth/m');
+% % ylabel('Distance/m');
+% xlabel('Distance/m');
+% axis image
+% title('epsilon')
+% shading interp
+% % axis equal
+% %saveas(figure11,'Primitive_model_epsilon.fig')
+% hold on 
+% figure(12)
+% %figure12=figure(12);
+% %z1=26;
+% %z2=66;
+% %zs=linspace(z1+1,z2,4);
+% %slice(x,y,z,s,24,24,zs);
+% % slice(x,y,z,s4,xs,ys,zs);
+% imagesc(sig0);
+% shading interp;
+% colormap hsv
+% colorbar
+% box on
+% set(gca,'XTick',[21,61,101,141,181,221,261],'XTickLabel',{'1','3','5','7','9','11','13'});           % 坐标轴对应的实际距离，由于反演过程中显示的为网格数，因此对应不同的模型需要修改成对应的实际距离。
+% % set(gca,'YTicj',[21,61,101,141,181,221,261],'YTicjLabel',{'1','3','5','7','9','11','13'});
+% set(gca,'YTick',[21,61,101,141],'YTickLabel',{'0','2','4','6'});           % 坐标轴对应的实际距离，由于反演过程中显示的为网格数，因此对应不同的模型需要修改成对应的实际距离。
+% ylabel('Depth/m');
+% % ylabel('Distance/m');
+% xlabel('Distance/m');
+% axis image
+% title('sigma')
+% shading interp
+% 
+% %saveas(figure12,'Primitive_model_sigma.fig')
+% %figure1=figure(11);
+% % saveas(figure1,'stochastic_model_epsilon.fig')
+% %close(figure1)
+% % figure2=figure(12);
+% % saveas(figure2,'stochastic_model_sigma.fig')
+% %close(figure2)
+
+
+
+
+
+
+ 
