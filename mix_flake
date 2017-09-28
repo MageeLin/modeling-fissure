@@ -1,0 +1,369 @@
+%林景宜编写
+%by Jingyi Lin
+
+
+e=mix_flake([5,5,5],75,150,250,50,1,10,200,6);
+
+%计算孔隙度
+num_fissure=0;
+for i=1:200
+    for j=1:200
+        for k=1:200
+            if e(i,j,k)==1.5;
+                num_fissure=num_fissure+1;
+            end
+        end
+    end
+end
+ratio_fissure=num_fissure/(200*50*80)*100
+
+
+function e=mix_flake(len_mod,pos_up,pos_down,dx,dy,num_flake,numlay,num_more,numlimit)
+% dx=30;%每个片状在xoy界面的大小
+% dy=200;%每个片状在xoy界面的大小
+% pos_down=200;%下界面位置
+% pos_up=0;%上界面位置
+% numlay=5;%每个片状里面的分层数
+% len_mod=[500,500];%实际大小（米）
+% numlimit=3;%分形次数
+% num_more=20;%每个片状里的裂隙数目
+%num_flake=5;%有多少个片状构造
+ %e=mix_flake([5,5,5],40,80,10,60,2,4,20,3);
+
+
+
+e=stochastic_media_model(len_mod);
+num_mod=len_mod*40;
+pos_flake=pos_fissure(num_mod,pos_up,pos_down,dx,dy,num_flake,numlay,num_more,numlimit);
+pos=round(pos_flake);
+r=1;
+for i=1:size(pos,1)
+    for x=pos(i,1)-r:pos(i,1)+r
+        for y=pos(i,2)-r:pos(i,2)+r
+            for z=pos(i,3)-r:pos(i,3)+r
+                if (x-pos(i,1))^2+(y-pos(i,2))^2+(z-pos(i,3))^2<r^2 && x>0&&x<=num_mod(1,1) && y>0&&y<=num_mod(1,2) && z>0&&z<=num_mod(1,3)
+                    e(x,y,z)=1.5;
+                end
+            end
+        end
+    end
+end
+
+e=flipdim(e,3);
+
+x=0:0.025:len_mod(1)-0.025;
+y=0:0.025:len_mod(2)-0.025;
+z=0:0.025:len_mod(3)-0.025;
+[x,y,z]=meshgrid(x,y,z);
+figure(2)
+slice(x,y,z,e,[0 len_mod(1)-0.025],[0 len_mod(2)-0.025],[0 len_mod(3)-0.025])
+isosurface(x,y,z,e,1.5)
+% set(gca,'ZDir','reverse')
+set(gca,'XTick',[0:0.5:len_mod(1)]) 
+set(gca,'YTick',[0:0.5:len_mod(2)]) 
+set(gca,'ZTick',[0:0.5:len_mod(3)]) 
+xlabel('Length / m', 'FontName'  , 'Helvetica' , 'Fontsize' , 14)
+ylabel('Width / m', 'FontName'  , 'Helvetica' , 'Fontsize' , 14)
+zlabel('Depth / m', 'FontName'  , 'Helvetica' , 'Fontsize' , 14)
+set(gca,'FontSize',14)
+shading flat
+axis equal
+alpha(0.6)
+
+% epsilon=e;
+% 
+% save epsilon.mat epsilon
+end
+
+
+
+
+
+
+
+
+function pos_flake=pos_fissure(num_mod,pos_up,pos_down,dx,dy,num_flake,numlay,num_more,numlimit)
+% dx=30;%每个片状在xoy界面的大小
+% dy=200;%每个片状在xoy界面的大小
+% pos_down=200;%下界面位置
+% pos_up=0;%上界面位置
+% numlay=5;%每个片状里面的分层数
+% num_mod=[500,500];%模型大小
+% numlimit=3;%分形次数
+% num_more=20;%每个片状里的裂隙数目
+%num_flake=5;%有多少个片状构造
+pos_flake=[];
+for i=1:num_flake
+    pos_more=pos_every(num_mod,pos_up,pos_down,dx,dy,numlay,num_more,numlimit);
+    pos_flake=[pos_flake;pos_more];
+end
+end
+
+
+
+
+
+
+
+%形成一个片状体
+function pos_more =pos_every(num_mod,pos_up,pos_down,dx,dy,numlay,num_more,numlimit)
+% dx=30;%每个片状在xoy界面的大小
+% dy=200;%每个片状在xoy界面的大小
+% pos_down=200;%下界面位置
+% pos_up=0;%上界面位置
+% numlay=5;%每个片状里面的分层数
+% num_mod=[500,500];%模型大小
+% numlimit=3;%分形次数
+% num_more=20;%每个片状里的裂隙数目
+
+
+
+
+
+
+dz=pos_down-pos_up;
+%取一个相同的xoy面位移矢量
+Dx=num_mod(1,1)*rand();
+Dy=num_mod(1,2)*rand();
+%取一个相同的随机旋转角度
+a=2*pi*rand();
+R=[cos(a),-sin(a);sin(a),cos(a)];
+%取一个30度以内的随机位移
+l=(dx^2+dy^2)^(1/2);
+ddx=1000000;
+ddy=1000000;
+b=0;
+while sqrt(ddx^2+ddy^2)>=(dz*tan(pi/3))
+    b=b+1
+    ddx=l-2*l*rand();
+    ddy=l-2*l*rand();
+end
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%下面是2017年9月9日编写成的滑坡体
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Dx=40;%不加大位移
+Dy=0;%不加大位移
+a=1/2*pi;%让旋转角固定
+R=[cos(a),-sin(a);sin(a),cos(a)];
+ddx=160;
+ddy=0;
+%到这里结束，其他为7.7程序
+
+
+dd_pos(1,:)=[0 0 0];
+dd_pos(2,1)=ddx;
+dd_pos(2,2)=ddy;
+dd_pos(2,3)=0;
+
+
+ddpos(:,1)=linspace(dd_pos(1,1),dd_pos(2,1),numlay);
+ddpos(:,2)=linspace(dd_pos(1,2),dd_pos(2,2),numlay);
+ddpos(:,3)=linspace(dd_pos(1,3),dd_pos(2,3),numlay);
+
+
+%生成一个片状裂隙
+pos_more=[];
+for n=1:num_more
+    %生成每个界面上的位置点
+    pos(:,3)=linspace(pos_up,pos_down,numlay);
+    for i=1:numlay
+        %在dx，dy内取随机位置
+        %这个地方可以限制每条分型曲线的规模，防止太大超出边界
+        if i==1
+            pos1(i,1)=dx*rand();
+            pos1(i,2)=dy*rand();
+        else
+            pos1(i,1)=dx*rand();
+            pos1(i,2)=dy*rand();
+            while (pos1(i,1)-pos1(i-1,1))^2>=(dx/5)^2 || (pos1(i,2)-pos1(i-1,2))^2>=(dy/5)^2
+                pos1(i,1)=dx*rand();
+                pos1(i,2)=dy*rand();
+            end
+        end
+        %旋转
+        pos2(i,:)=(R*[pos1(i,1);pos1(i,2)])';
+        %加 大平移
+        pos3(i,1)=pos2(i,1)+Dx;
+        pos3(i,2)=pos2(i,2)+Dy;
+        %加dd小位移
+        pos(i,1)=pos3(i,1)+ddpos(i,1);
+        pos(i,2)=pos3(i,2)+ddpos(i,2);
+    end
+    
+    pos_single=[];
+    for i=1:numlay-1
+        pos_lay=pos([i,i+1],:);
+        pos_lay_all=koch3(pos_lay,numlimit);
+        pos_single=[pos_single;pos_lay_all];
+    end
+    
+    
+    pos_more=[pos_more;pos_single];
+end
+
+end
+
+
+
+
+
+
+%输出位置
+%pos_lay是2×3阶矩阵
+function pos=koch3(pos_lay,numlimit)
+pos=pos_lay;
+n=2;
+origin=[0,0,0];
+direct=[pos_lay(2,2)-pos_lay(1,2),pos_lay(1,1)-pos_lay(2,1),0];
+theta=pi/3;
+
+
+for k=1:numlimit
+    d=diff(pos)/3;
+    m=4*n-3;
+    p_start=pos(1:n-1,:);
+    pos(5:4:m,:)=pos(2:n,:);
+    pos(2:4:m,:)=p_start+d;
+    %koch点的三维旋转
+    pos(3:4:m,:)=p_start+d+rot3d(d,origin,direct,theta);
+    %%%%%%%%%%%%%%%
+    pos(4:4:m,:)=p_start+2*d;
+    n=m;
+end
+figure(1)
+plot3(pos(:,1),pos(:,2),pos(:,3))
+axis equal
+hold on
+grid on
+end
+    
+    
+    
+%三维旋转
+function Pr=rot3d(P,origin,dirct,theta)
+% 将坐标点P绕着，过origin点，方向为dirct的直线，旋转theta角
+% P：需要旋转的做标集合，n×3矩阵
+% origin：转轴通过的点，1×3向量
+% direct：转轴方向向量，1×3向量
+% theta：旋转角度，单位弧度
+
+
+dirct=dirct(:)/norm(dirct);
+
+A_hat=dirct*dirct';
+
+A_star=[0,         -dirct(3),      dirct(2)
+        dirct(3),          0,     -dirct(1)
+       -dirct(2),   dirct(1),            0];
+I=eye(3);
+M=A_hat+cos(theta)*(I-A_hat)+sin(theta)*A_star;
+origin=repmat(origin(:)',size(P,1),1);
+Pr=(P-origin)*M'+origin;
+end
+
+
+
+
+
+
+
+function e =stochastic_media_model(len_mod)
+% % % % % % % % % % % %建立随机介质% % % % % % % % % % % % %
+%len_mod为1×3矩阵，为模型真实大小（米）  numlay为分层控制系统的层数，N为每个分形点之间的分段数，N_hole为孔隙数目
+dalta=0.02;%可控制随机程度数值的上下限
+A=5;%参数ABCr
+B=5;
+C=5;
+r=0.05;
+X=len_mod(1)*40;%模型大小X方向
+Y=len_mod(2)*40;%模型大小Y方向
+Z=len_mod(3)*40;%模型大小Z方向
+hw=4;%hw用于平滑
+X=X+2*hw;
+Y=Y+2*hw;
+Z=Z+2*hw;
+dx=1;%网格间距
+dy=1;
+dz=1;
+% dalta=dalta*mu;
+AUTO=meshgrid(X,Y,Z);
+for i = 1:X
+    for j = 1:Y
+        for k=1:Z
+            if k>=1 && k<80
+                A=0.5;
+                B=0.5;
+                r=0.05;
+            elseif k>=80 && k<160
+                A=0.5;
+                B=0.5;
+                r=0.05;
+            else
+                A=0.5;
+                B=0.5;
+                r=0.05;
+            end
+            AUTO(i,j,k)=exp(-1*((i*dx)^2/A^2+(j*dz)^2/B^2+(k*dy)^2/C^2).^(1./(1+r)));
+            %  AUTO(i,j,k)=exp(-1*sqrt(((j*dx)^2/A^2+(i*dz)^2/B^2+(k*dy)^2/C^2)));
+        end
+    end
+end
+AUTO = fftn(AUTO);
+AUTO = real(AUTO).^2+imag(AUTO).^2;
+
+rand('twister', sum(100*clock));
+RAND=rand(X,Y,Z).*(2*pi);
+
+REAL=AUTO.*cos(RAND);
+IMAGE=AUTO.*sin(RAND);
+Rand = complex(REAL,IMAGE);
+Rand = fftn(Rand);
+Rand = real(Rand).^2+imag(Rand).^2;
+
+a=double(Rand);  % a表示原始图像灰度矩阵
+
+% [m,n,p]=size(a);
+b=zeros(X-2*hw,Y-2*hw,Z-2*hw);
+e=zeros(X-2*hw,Y-2*hw,Z-2*hw);
+for i=1+hw:X-hw  %求平滑矩阵
+    for j=1+hw:Y-hw
+        for k=1+hw:Z-hw
+            wi=a(i-hw:i+hw,j-hw:j+hw,k-hw:k+hw);
+            b(i-hw,j-hw,k-hw)=mean2(wi);
+            if k>=1 && k<80
+                e(i-hw,j-hw,k-hw)=10;%给介电常数赋初值
+            elseif k>=80 && k<160
+                e(i-hw,j-hw,k-hw)=15;%给介电常数赋初值
+            else
+                e(i-hw,j-hw,k-hw)=4;%给基岩介电常数赋初值
+            end
+%             e(i-hw,j-hw,k-hw)=5;%给介电常数赋初值
+        end
+    end
+end
+   
+b=dalta*zscore(b);
+e=e.*(1+b);
+
+% x=0:10:len_mod(1)-10;
+% y=0:10:len_mod(2)-10;
+% z=0:10:len_mod(3)-10;
+% 
+% figure(2)
+% slice(x,y,z,e,[0 len_mod(1)-10],[0 len_mod(2)-10],[0 len_mod(3)-10])
+% set(gca,'ZDir','reverse')
+% set(gca,'XTick',[0:100:len_mod(1)-10]) 
+% set(gca,'YTick',[0:100:len_mod(2)-10]) 
+% set(gca,'ZTick',[0:100:len_mod(3)-10]) 
+% xlabel('Length / m', 'FontName'  , 'Helvetica' , 'Fontsize' , 14)
+% ylabel('Width / m', 'FontName'  , 'Helvetica' , 'Fontsize' , 14)
+% zlabel('Depth / m', 'FontName'  , 'Helvetica' , 'Fontsize' , 14)
+% set(gca,'FontSize',14);
+% shading flat
+% axis equal
+% alpha(0.6)
+end
